@@ -1,26 +1,28 @@
 #include "merge.h"
 #include <stdio.h>
 
-std::vector<int> merge(std::vector<int> &v, int beg, int end){
-    if(beg + 1 == end) return std::vector<int>();
+void merge(std::vector<int> &v, int beg, int end){
+    if(end - beg < 2) return;
     int mid = (beg + end) >> 1;
     merge(v, beg, mid);
     merge(v, mid, end);
-    std::vector<int> buf(end - beg);
+
     int i = beg;
     int j = mid;
+
+    std::vector<int> buf(end - beg);
     int k = 0;
     while(i != mid && j != end){
         buf[k++] = v[i] < v[j] ? v[i++] : v[j++];
     }
     while(i != mid) buf[k++] = v[i++];
     while(j != end) buf[k++] = v[j++];
-
-    return buf;
+    copy(buf.begin(), buf.end(), v.begin() + beg);
 }
 
 std::vector<int> merge_sort(std::vector<int> &v){
-    return merge(v, 0, v.size());
+    merge(v, 0, v.size());
+    return v;
 }
 
 std::vector<int> merge_sorted(std::vector<int> &v1, std::vector<int>&v2){

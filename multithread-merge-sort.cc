@@ -5,81 +5,52 @@
 // standard lib
 #include <thread>
 #include <future>
-#include <mutex>
-#include <atomic>
-#include <condition_variable>
 #include <queue>
+#include <mutex>
 // third-party lib
 // user-defined lib
 #include "merge.h"
-
-
-class ConcurrentQueue{
-private:
-    std::condition_variable cv;
-    std::mutex mut_in;
-    std::mutex mut_out;
-    std::mutex mut_size;
-    std::atomic<int> sorted_cnt;
-    std::queue<std::vector<int>> q;
-
-public:
-    void push(std::vector<int> v){
-        {
-            std::lock_guard<std::mutex> lk(mut_in);
-            q.push(v);
-        }
-        sorted_cnt++;
-        cv.notify_one();
-    }
-
-    std::vector<std::vector<int>> pop2(){
-        std::unique_lock<std::mutex> lk(mut_out);
-        cv.wait(lk, [this](){return this->sorted_cnt > 1;});
-        sorted_cnt--;
-        sorted_cnt--;
-
-        std::vector<std::vector<int>> ret;
-        ret.push_back(q.front());
-        q.pop();
-        ret.push_back(q.front());
-        q.pop();
-
-        lk.unlock();
-        return ret;
-    }
-
-    int size(){
-        std::lock_guard<std::mutex> lk(mut_size);
-        return q.size();
-    }
-
-    std::vector<int> front(){
-        return q.front();
-    }
-};
+#include "bilist.h"
 
 std::vector<int> merge_sort_with_multithread(std::vector<std::vector<int>> nums_list){
-    ConcurrentQueue q;
-    std::queue<std::shared_future<std::vector<int>>> running_futures;
+    std::queue<std::vector<int>> q;
+    BiLinkedList<std::shared_future<std::vector<int>>> running_futures;
+    int counts = 0;
     for(auto nums: nums_list){
         std::shared_future<std::vector<int>> f = std::async(std::launch::async, merge_sort, std::ref(nums));
-        running_futures.push(f);
+        running_futures.add(f);
+        counts += nums.size();
     }
 
-    while(!running_futures.empty()){
-        auto f = running_futures.front();
-        f.wait();
-        auto v = f.get();
-        running_futures.pop();
-        q.push(v);
-        if(q.size() > 1){
-            auto nums_list = q.pop2();
-            std::shared_future<std::vector<int>> f = std::async(std::launch::async, merge_sorted, std::ref(nums_list[0]), std::ref(nums_list[1]));
-            running_futures.push(f);
-            q.push(f.get());
+    std::mutex m;
+
+    while(true){
+        for(auto f = running_futures.begin(); f != running_futures.end(); f = f->next){
+            if(f->val.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready){
+                q.push(f->val.get());
+                printf("push one in q\n");
+                running_futures.remove(f);
+            }
+        }
+        while(q.size() > 1){
+            auto n1 = q.front();
+            q.pop();
+            auto n2 = q.front();
+            q.pop();
+
+            std::shared_future<std::vector<int>> f = std::async(std::launch::async, merge_sorted, std::ref(n1), std::ref(n2));
+            running_futures.add(f);
+            printf("add one in r\n");
+        }
+        std::sleep_for(std::chrono::seconds(2));
+        if(running_futures.empty()){
+            printf("r.empty = %d q.size = %d q.front.size = %d counts = %d\n", running_futures.empty(), q.size(), q.front().size(), counts);
+            // std::lock_guard<std::mutex> lk(m);
+            if(q.front().size() == counts) break;
         }
     }
+
+    for_each(q.front().begin(), q.front().end(), [](int n){printf("%d ", n);});
 
     return q.front();
 }
@@ -92,16 +63,8 @@ int main(){
     nums_list.push_back(nums1);
     nums_list.push_back(nums2);
     nums_list.push_back(nums3);
-    //auto n = merge_sort_with_multithread(nums_list);
-    // auto f = std::async(std::launch::async, merge_sort_with_multithread, nums_list);
-    auto f = std::async(std::launch::async, merge_sort, std::ref(nums1));
-    f.wait();
-    for(auto i: f.get()){
-        printf("%d ", i);
-    }
-    printf("\n");
-    for(auto i: merge_sort(nums1)){
-        printf("%d ", i);
-    }
+    auto ret = merge_sort_with_multithread(nums_list);
+    printf("size = %d\n", ret.size());
+    for_each(ret.begin(), ret.end(), [](int n){printf("%d ", n);});
     return 0;
 }

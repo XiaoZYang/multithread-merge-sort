@@ -1,6 +1,6 @@
 CXX=g++
-CXXFLAGS=-g -std=c++11 -pthread -Wall
-SRC=merge.cc multithread-merge-sort.cc
+CXXFLAGS=-std=c++11 -pthread -Wall -I include -g
+SRC=merge.cc bilist.cc multithread-merge-sort.cc
 OBJ=$(SRC:.cc=.o)
 RUN=multithread-merge-sort
 DEBUGER=gdb
@@ -8,8 +8,9 @@ DEBUGER=gdb
 build: $(SRC) $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(RUN)
 
-multithread-merge-sort.o: multithread-merge-sort.cc
-merge.o: merge.cc
+$(RUN): $(OBJ)
+
+multithread-merge-sort.o: merge.o bilist.o
 
 debug:
 	$(DEBUGER) $(RUN)
