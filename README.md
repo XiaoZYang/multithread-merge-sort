@@ -41,6 +41,7 @@ queue的size为1时即没有sort线程和merge线程正在运行，并且只剩�
 2. 使用文件存储一定数据量的有序数组，每次merge一个文件大小，最后将小文将merge成一个大文件。
 
 ## 实验环境说明
+| key | value |
 |---|------|
 | OS | macOS el caption|
 | compiler | Apple llvm version 8.0.0|
