@@ -6,7 +6,7 @@
 #include <thread>
 #include <future>
 #include <queue>
-#include <mutex>
+#include <algorithm>
 // third-party lib
 // user-defined lib
 #include "merge.h"
@@ -22,13 +22,10 @@ std::vector<int> merge_sort_with_multithread(std::vector<std::vector<int>> nums_
         counts += nums.size();
     }
 
-    std::mutex m;
-
     while(true){
         for(auto f = running_futures.begin(); f != running_futures.end(); f = f->next){
-            if(f->val.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready){
+            if(f->val.wait_for(std::chrono::milliseconds(200)) == std::future_status::ready){
                 q.push(f->val.get());
-                printf("push one in q\n");
                 running_futures.remove(f);
             }
         }
@@ -40,17 +37,12 @@ std::vector<int> merge_sort_with_multithread(std::vector<std::vector<int>> nums_
 
             std::shared_future<std::vector<int>> f = std::async(std::launch::async, merge_sorted, std::ref(n1), std::ref(n2));
             running_futures.add(f);
-            printf("add one in r\n");
         }
-        std::sleep_for(std::chrono::seconds(2));
         if(running_futures.empty()){
-            printf("r.empty = %d q.size = %d q.front.size = %d counts = %d\n", running_futures.empty(), q.size(), q.front().size(), counts);
-            // std::lock_guard<std::mutex> lk(m);
+            std::this_thread::sleep_for(std::chrono::seconds(2));
             if(q.front().size() == counts) break;
         }
     }
-
-    for_each(q.front().begin(), q.front().end(), [](int n){printf("%d ", n);});
 
     return q.front();
 }
@@ -65,6 +57,6 @@ int main(){
     nums_list.push_back(nums3);
     auto ret = merge_sort_with_multithread(nums_list);
     printf("size = %d\n", ret.size());
-    for_each(ret.begin(), ret.end(), [](int n){printf("%d ", n);});
+    std::for_each(ret.begin(), ret.end(), [](int n){printf("%d ", n);});
     return 0;
 }

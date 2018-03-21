@@ -12,7 +12,10 @@ class BiLinkedList{
             class Node * next;
             T val;
             Node(T val): prev(nullptr), next(nullptr), val(val) {}
-            //~Node(){}
+            ~Node(){
+                prev = nullptr;
+                next = nullptr;
+            }
     };
     Node *head;
     Node *tail;
@@ -38,7 +41,7 @@ class BiLinkedList{
             }
             if(n->prev != nullptr) n->prev->next = n->next;
             if(n->next != nullptr) n->next->prev = n->prev;
-            // delete n;
+            delete n;
         }
 
         Node* begin(){

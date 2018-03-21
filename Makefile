@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-std=c++11 -pthread -Wall -I include -g
+CXXFLAGS=-std=c++11 -Wall 
 SRC=merge.cc bilist.cc multithread-merge-sort.cc
 OBJ=$(SRC:.cc=.o)
 RUN=multithread-merge-sort
