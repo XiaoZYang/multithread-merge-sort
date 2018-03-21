@@ -50,7 +50,7 @@ std::vector<int> merge_sort_with_multithread(std::vector<std::vector<int>> nums_
 int main(){
     std::vector<int> nums1 = {1, 5, 5, 2, 7, 6, 0, 9, 8, 1, 7};
     std::vector<int> nums2 = {1, 3, 0, 2, 1, 9, 3, 1, 9, 5, 9};
-    std::vector<int> nums3 = {1, 5, 6, 5, 9, 8, 3, 2, 3, 6, 3};
+    std::vector<int> nums3 = {1, 5, 6, 9, 3, 8, 4, 1, 0, 6, 3};
     std::vector<std::vector<int>> nums_list;
     nums_list.push_back(nums1);
     nums_list.push_back(nums2);
